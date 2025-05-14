@@ -40,7 +40,7 @@ Feel free to ask for more details or a full setup guide!
 
 ## 🛠️ Built With
 - **Dart** & **Flutter** (cross-platform mobile framework)
-- **SQLite** (local database)
+- **Supabase** (cloud database and authentication)
 
 ---
 
@@ -51,7 +51,7 @@ Feel free to ask for more details or a full setup guide!
 ---
 
 ## 🗄️ Database
-- **SQLite** is used for local storage of users, quiz scores, and user history.
+- **Supabase** is used for cloud storage of users, quiz scores, and user history.
 
 ---
 

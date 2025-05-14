@@ -10,6 +10,7 @@ A modern, AI-powered study companion app that helps you learn, quiz yourself, an
 
 ---
 
+
 ## 🛠️ Built With
 - **Dart** & **Flutter** (cross-platform mobile framework)
 - **SQLite** (local database)

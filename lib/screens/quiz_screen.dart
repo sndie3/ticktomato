@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:developer' as developer;
+import 'package:uuid/uuid.dart';
 import '../services/quiz_service.dart';
 import '../services/auth_service.dart';
-import '../database/database_helper.dart';
+import '../services/supabase_service.dart';
 
 class QuizScreen extends StatefulWidget {
   final String category;
@@ -20,7 +22,7 @@ class QuizScreen extends StatefulWidget {
 
 class _QuizScreenState extends State<QuizScreen> {
   final QuizService _quizService = QuizService();
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  final SupabaseService _supabase = SupabaseService();
   List<Map<String, dynamic>> _questions = [];
   int _currentQuestionIndex = 0;
   int _score = 0;
@@ -32,28 +34,42 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
-    print(
+    developer.log(
       'QuizScreen initialized for category: ${widget.category} (ID: ${widget.categoryId})',
+      name: 'QuizScreen',
     );
     _loadQuestions();
   }
 
   Future<void> _loadQuestions() async {
-    print('Loading questions for category: ${widget.categoryId}');
+    developer.log(
+      'Loading questions for category: ${widget.categoryId}',
+      name: 'QuizScreen',
+    );
     try {
       final questions = await _quizService.getQuestions(
         category: widget.categoryId,
         amount: 10,
       );
-      print('Loaded ${questions.length} questions');
-      print('First question: ${questions.first['question']}');
+      developer.log(
+        'Loaded ${questions.length} questions',
+        name: 'QuizScreen',
+      );
+      developer.log(
+        'First question: ${questions.first['question']}',
+        name: 'QuizScreen',
+      );
 
       setState(() {
         _questions = questions;
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading questions: $e');
+      developer.log(
+        'Error loading questions: $e',
+        name: 'QuizScreen',
+        error: e,
+      );
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(
@@ -64,35 +80,67 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _saveScore() async {
-    print('Attempting to save score: $_score for category: ${widget.category}');
+    developer.log(
+      'Attempting to save score: [32m[0m$_score[0m for category: [34m${widget.category}[0m',
+      name: 'QuizScreen',
+    );
     try {
       final userId = await context.read<AuthService>().getCurrentUserId();
-      print('Current user ID: $userId');
-
+      developer.log(
+        'Current user ID: [33m$userId[0m',
+        name: 'QuizScreen',
+      );
+      print('Saving score for userId: ' +
+          (userId ?? 'null') +
+          ', score: ' +
+          _score.toString() +
+          ', category: ' +
+          widget.category);
       if (userId != null) {
-        await _dbHelper.saveQuizScore(
-          int.parse(userId),
-          _score,
-          widget.category,
+        final quizId = const Uuid().v4();
+        await _supabase.saveQuizScore(
+          userId: userId,
+          score: _score,
+          category: widget.category,
+          quizId: quizId,
         );
-        print('Score saved successfully');
+        print('Score saved!');
+        developer.log(
+          'Score saved successfully',
+          name: 'QuizScreen',
+        );
       } else {
-        print('Failed to save score: No user ID found');
+        developer.log(
+          'Failed to save score: No user ID found',
+          name: 'QuizScreen',
+        );
       }
     } catch (e) {
-      print('Error saving score: $e');
+      developer.log(
+        'Error saving score: $e',
+        name: 'QuizScreen',
+        error: e,
+      );
+      print('Error saving score: ' + e.toString());
     }
   }
 
   void _handleAnswer(String answer) {
     if (_hasAnswered) {
-      print('Answer already submitted, ignoring');
+      developer.log(
+        'Answer already submitted, ignoring',
+        name: 'QuizScreen',
+      );
       return;
     }
 
-    print('Handling answer: $answer');
-    print(
+    developer.log(
+      'Handling answer: $answer',
+      name: 'QuizScreen',
+    );
+    developer.log(
       'Correct answer: ${_questions[_currentQuestionIndex]['correct_answer']}',
+      name: 'QuizScreen',
     );
 
     setState(() {
@@ -100,9 +148,15 @@ class _QuizScreenState extends State<QuizScreen> {
       _hasAnswered = true;
       if (answer == _questions[_currentQuestionIndex]['correct_answer']) {
         _score++;
-        print('Correct answer! New score: $_score');
+        developer.log(
+          'Correct answer! New score: $_score',
+          name: 'QuizScreen',
+        );
       } else {
-        print('Incorrect answer. Score remains: $_score');
+        developer.log(
+          'Incorrect answer. Score remains: $_score',
+          name: 'QuizScreen',
+        );
       }
     });
 
@@ -113,10 +167,16 @@ class _QuizScreenState extends State<QuizScreen> {
             _currentQuestionIndex++;
             _hasAnswered = false;
             _selectedAnswer = null;
-            print('Moving to next question: ${_currentQuestionIndex + 1}');
+            developer.log(
+              'Moving to next question: ${_currentQuestionIndex + 1}',
+              name: 'QuizScreen',
+            );
           } else {
             _quizCompleted = true;
-            print('Quiz completed. Final score: $_score/${_questions.length}');
+            developer.log(
+              'Quiz completed. Final score: $_score/${_questions.length}',
+              name: 'QuizScreen',
+            );
             _saveScore();
           }
         });
@@ -125,7 +185,10 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _restartQuiz() {
-    print('Restarting quiz');
+    developer.log(
+      'Restarting quiz',
+      name: 'QuizScreen',
+    );
     setState(() {
       _currentQuestionIndex = 0;
       _score = 0;
@@ -137,8 +200,9 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print(
+    developer.log(
       'Building QuizScreen. Loading: $_isLoading, Completed: $_quizCompleted',
+      name: 'QuizScreen',
     );
 
     if (_isLoading) {
@@ -164,7 +228,10 @@ class _QuizScreenState extends State<QuizScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  print('Navigating back to home screen');
+                  developer.log(
+                    'Navigating back to home screen',
+                    name: 'QuizScreen',
+                  );
                   Navigator.of(context).pop();
                 },
                 child: const Text('Back to Home'),
@@ -181,8 +248,14 @@ class _QuizScreenState extends State<QuizScreen> {
       currentQuestion['correct_answer'],
     ]..shuffle();
 
-    print('Current question: ${currentQuestion['question']}');
-    print('Available answers: $allAnswers');
+    developer.log(
+      'Current question: ${currentQuestion['question']}',
+      name: 'QuizScreen',
+    );
+    developer.log(
+      'Available answers: $allAnswers',
+      name: 'QuizScreen',
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text('Quiz: ${widget.category}')),
@@ -216,10 +289,9 @@ class _QuizScreenState extends State<QuizScreen> {
                 child: ElevatedButton(
                   onPressed: _hasAnswered ? null : () => _handleAnswer(answer),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        showCorrect
-                            ? Colors.green
-                            : showIncorrect
+                    backgroundColor: showCorrect
+                        ? Colors.green
+                        : showIncorrect
                             ? Colors.red
                             : null,
                   ),
@@ -231,7 +303,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                 ),
               );
-            }).toList(),
+            }),
             const SizedBox(height: 16),
             if (_hasAnswered)
               Text(
@@ -239,10 +311,9 @@ class _QuizScreenState extends State<QuizScreen> {
                     ? 'Correct!'
                     : 'Incorrect! The correct answer is: ${_quizService.decodeHtml(currentQuestion['correct_answer'])}',
                 style: TextStyle(
-                  color:
-                      _selectedAnswer == currentQuestion['correct_answer']
-                          ? Colors.green
-                          : Colors.red,
+                  color: _selectedAnswer == currentQuestion['correct_answer']
+                      ? Colors.green
+                      : Colors.red,
                   fontWeight: FontWeight.bold,
                 ),
               ),

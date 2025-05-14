@@ -1,4 +1,4 @@
-package com.example.finalstudybudd
+package com.sandie.ticktomato
 
 import io.flutter.embedding.android.FlutterActivity
 

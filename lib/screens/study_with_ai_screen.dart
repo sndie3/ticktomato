@@ -26,11 +26,11 @@ class _StudyWithAIScreenState extends State<StudyWithAIScreen> {
       _topicController.clear();
     });
     try {
-      final suggestions = await context
-          .read<CohereService>()
-          .getStudySuggestions(userInput);
+      // Use getExplanation for any user input, including code generation
+      final aiResponse =
+          await context.read<CohereService>().getExplanation(userInput);
       setState(() {
-        _messages.add({'role': 'ai', 'text': suggestions.join('\n')});
+        _messages.add({'role': 'ai', 'text': aiResponse});
         _isLoading = false;
       });
       // Scroll to bottom after response
@@ -44,7 +44,7 @@ class _StudyWithAIScreenState extends State<StudyWithAIScreen> {
       setState(() {
         _messages.add({
           'role': 'ai',
-          'text': 'Sorry, I encountered an error. Please try again.',
+          'text': 'Sorry, I encountered an error. Please try again.'
         });
         _isLoading = false;
       });

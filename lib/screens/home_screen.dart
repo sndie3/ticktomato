@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../services/cohere_service.dart';
 import '../services/quiz_service.dart';
 import 'login_screen.dart';
 import 'quiz_screen.dart';
@@ -9,6 +8,7 @@ import 'user_history_screen.dart';
 import 'pomodoro_screen.dart';
 import 'study_with_ai_screen.dart';
 import 'dart:async';
+import 'session_guard.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,8 +19,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _topicController = TextEditingController();
-  String _aiResponse = '';
-  bool _isLoading = false;
   List<Map<String, dynamic>> _categories = [];
   bool _isLoadingCategories = true;
   bool _showCategories = false;
@@ -57,27 +55,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error loading categories: $e')));
-      }
-    }
-  }
-
-  Future<void> _getStudySuggestions() async {
-    if (_topicController.text.isEmpty) return;
-    setState(() => _isLoading = true);
-    try {
-      final suggestions = await context
-          .read<CohereService>()
-          .getStudySuggestions(_topicController.text);
-      setState(() {
-        _aiResponse = suggestions.join('\n');
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -151,13 +128,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final isWide = screenWidth > 600;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Study Buddy'),
+        title: Image.asset(
+          'assets/icon/logo.JPG',
+          height: 36,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const UserHistoryScreen()),
+                MaterialPageRoute(
+                    builder: (_) => SessionGuard(child: UserHistoryScreen())),
               );
             },
           ),
@@ -191,7 +172,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Pomodoro Timer',
-                              style: Theme.of(context).textTheme.titleMedium
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const Spacer(),
@@ -210,7 +193,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 12),
                         Text(
                           _formatPomodoroTime(_pomodoroSecondsLeft),
-                          style: Theme.of(context).textTheme.displayMedium
+                          style: Theme.of(context)
+                              .textTheme
+                              .displayMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
@@ -250,7 +235,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: const Text('Study with AI'),
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: isWide ? 24 : 18),
-                    textStyle: Theme.of(context).textTheme.titleMedium
+                    textStyle: Theme.of(context)
+                        .textTheme
+                        .titleMedium
                         ?.copyWith(fontWeight: FontWeight.bold),
                     backgroundColor: Colors.blueAccent,
                     foregroundColor: Colors.white,
@@ -284,7 +271,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Quiz',
-                              style: Theme.of(context).textTheme.titleMedium
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                           ],
@@ -292,7 +281,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Test your knowledge by taking a quiz! Choose a category to get started.',
-                          style: Theme.of(context).textTheme.bodyMedium
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
                               ?.copyWith(color: Colors.black54),
                         ),
                         const SizedBox(height: 16),
@@ -305,7 +296,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 horizontal: isWide ? 48 : 32,
                                 vertical: isWide ? 20 : 16,
                               ),
-                              textStyle: Theme.of(context).textTheme.titleMedium
+                              textStyle: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
                               backgroundColor: Colors.deepPurple,
                               foregroundColor: Colors.white,
@@ -324,28 +317,25 @@ class _HomeScreenState extends State<HomeScreen> {
                           _isLoadingCategories
                               ? const Center(child: CircularProgressIndicator())
                               : Padding(
-                                padding: const EdgeInsets.only(top: 16.0),
-                                child: Wrap(
-                                  spacing: 8.0,
-                                  runSpacing: 8.0,
-                                  children:
-                                      _categories.map((category) {
-                                        return ActionChip(
-                                          label: Text(category['name']),
-                                          backgroundColor:
-                                              Colors.deepPurple[50],
-                                          labelStyle: const TextStyle(
-                                            color: Colors.deepPurple,
-                                          ),
-                                          onPressed:
-                                              () => _startQuiz(
-                                                category['name'],
-                                                category['id'].toString(),
-                                              ),
-                                        );
-                                      }).toList(),
+                                  padding: const EdgeInsets.only(top: 16.0),
+                                  child: Wrap(
+                                    spacing: 8.0,
+                                    runSpacing: 8.0,
+                                    children: _categories.map((category) {
+                                      return ActionChip(
+                                        label: Text(category['name']),
+                                        backgroundColor: Colors.deepPurple[50],
+                                        labelStyle: const TextStyle(
+                                          color: Colors.deepPurple,
+                                        ),
+                                        onPressed: () => _startQuiz(
+                                          category['name'],
+                                          category['id'].toString(),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
                                 ),
-                              ),
                       ],
                     ),
                   ),

@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 class CohereService {
   final String apiKey;
@@ -32,7 +33,8 @@ class CohereService {
         throw Exception('Failed to generate response: ${response.statusCode}');
       }
     } catch (e) {
-      print('Cohere API error: $e');
+      developer.log('Cohere API error: $e', name: 'CohereService', error: e);
+      rethrow;
       return 'Sorry, I encountered an error. Please try again.';
     }
   }

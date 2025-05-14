@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 class QuizService {
   final String baseUrl = 'https://opentdb.com/api.php';
@@ -24,8 +25,8 @@ class QuizService {
       }
       throw Exception('Failed to load questions');
     } catch (e) {
-      print('Quiz API error: $e');
-      return [];
+      developer.log('Quiz API error: $e', name: 'QuizService', error: e);
+      rethrow;
     }
   }
 
@@ -41,8 +42,8 @@ class QuizService {
       }
       throw Exception('Failed to load categories');
     } catch (e) {
-      print('Categories API error: $e');
-      return [];
+      developer.log('Categories API error: $e', name: 'QuizService', error: e);
+      rethrow;
     }
   }
 

@@ -6,7 +6,7 @@ A modern, AI-powered study companion app that helps you learn, quiz yourself, an
 ---
 
 ## 👨‍💻 Developer
-**Sandie H. Goles**
+**Sandie**
 
 ---
 
